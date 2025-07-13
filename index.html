@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World</title>
+</head>
+<body>
+    <h1>Metronomo</h1>
+    <label for="bpm">BPM:</label>
+    <input type="number" id="bpm" value="100" min="30" max="300">
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <br><br>
+    <label for="volume">Volume:</label>
+    <input type="range" id="volume" min="0" max="100" value="50">
+    <span id="volumeValue">50</span>
+    <div id="status"></div>
+    <div id="barCount" style="text-align:center;font-size:1.5em;margin-bottom:10px;">Battuta: 0</div>
+    <div id="circles" style="display: flex; gap: 20px; margin: 20px 0; justify-content: center;">
+        <div class="circle" id="circle1" style="width:30px;height:30px;border-radius:50%;background:#ccc;"></div>
+        <div class="circle" id="circle2" style="width:30px;height:30px;border-radius:50%;background:#ccc;"></div>
+        <div class="circle" id="circle3" style="width:30px;height:30px;border-radius:50%;background:#ccc;"></div>
+        <div class="circle" id="circle4" style="width:30px;height:30px;border-radius:50%;background:#ccc;"></div>
+    </div>
+    <audio id="track" src="Track1.wav"></audio>
+    <script>
+let interval = null;
+const status = document.getElementById('status');
+const volumeSlider = document.getElementById('volume');
+const volumeValue = document.getElementById('volumeValue');
+const trackAudio = document.getElementById('track');
+let beatCount = 0;
+
+volumeSlider.oninput = function() {
+    volumeValue.textContent = volumeSlider.value;
+};
+
+function metronomeTick() {
+    beatCount++;
+    status.textContent = '';
+    // aggiorna cerchi
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById('circle' + i).style.background = '#ccc';
+    }
+    document.getElementById('circle' + beatCount).style.background = '#4caf50';
+    // aggiorna contatore battuta
+    if (beatCount === 1) {
+        window.barNumber = (window.barNumber || 1);
+        document.getElementById('barCount').textContent = 'Battuta: ' + window.barNumber;
+        trackAudio.volume = volumeSlider.value / 100;
+        trackAudio.currentTime = 0;
+        // Imposta playbackRate in base al BPM (100 BPM = normale)
+        const bpm = parseInt(document.getElementById('bpm').value);
+        trackAudio.playbackRate = bpm / 100;
+        trackAudio.play();
+    }
+    if (beatCount === 4) {
+        beatCount = 0;
+        window.barNumber = (window.barNumber || 1) + 1;
+    }
+}
+
+document.getElementById('start').onclick = function() {
+    const bpm = parseInt(document.getElementById('bpm').value);
+    if (interval) clearInterval(interval);
+    beatCount = 0;
+    window.barNumber = 0;
+    document.getElementById('barCount').textContent = 'Battuta: 0';
+    interval = setInterval(() => {
+        metronomeTick();
+    }, 60000 / bpm);
+    status.textContent = 'Metronomo avviato';
+};
+document.getElementById('stop').onclick = function() {
+    if (interval) clearInterval(interval);
+    interval = null;
+    trackAudio.pause();
+    trackAudio.currentTime = 0;
+    status.textContent = 'Metronomo fermato';
+    beatCount = 0;
+    window.barNumber = 0;
+    document.getElementById('barCount').textContent = 'Battuta: 0';
+    // reset cerchi
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById('circle' + i).style.background = '#ccc';
+    }
+};
+    </script>
+</body>
+</html>
