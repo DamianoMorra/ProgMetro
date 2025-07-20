@@ -62,8 +62,9 @@ function metronomeTick() {
     circles.forEach(circle => circle.style.background = '#ccc');
     document.getElementById('circle' + beatCount).style.background = '#4caf50';
     
-    // Update bar counter and BPM
-    document.getElementById('barCount').textContent = `Bar: ${barNumber} (${currentBpm} BPM)`;
+    // Update bar counter and BPM display
+    document.getElementById('barCount').textContent = `Bar: ${barNumber}`;
+    document.getElementById('currentBpmDisplay').textContent = `BPM: ${currentBpm}`;
 
     // Play audio only on first beat of the bar
     if (beatCount === 1) {
@@ -89,6 +90,7 @@ document.getElementById('start').addEventListener('click', function() {
     isIncreasing = true;
     barsInCurrentPhase = 0;
     document.getElementById('barCount').textContent = 'Bar: 1';
+    document.getElementById('currentBpmDisplay').textContent = `BPM: ${currentBpm}`;
     
     // Update button styles
     this.style.background = '#4caf50';
@@ -120,7 +122,9 @@ document.getElementById('stop').addEventListener('click', function() {
     // Reset counters
     beatCount = 0;
     barNumber = 0;
+    currentBpm = parseInt(bpmInput.value);
     document.getElementById('barCount').textContent = 'Bar: 0';  // Reset to 0 when si preme stop
+    document.getElementById('currentBpmDisplay').textContent = `BPM: ${currentBpm}`;
     
     // Reset button styles
     document.getElementById('start').style.background = '#eee';
