@@ -3,6 +3,10 @@ const status = document.getElementById('status');
 const volumeSlider = document.getElementById('volume');
 const volumeValue = document.getElementById('volumeValue');
 const trackAudio = document.getElementById('track');
+
+// Preload audio
+trackAudio.load();
+trackAudio.volume = volumeSlider.value / 100;
 let beatCount = 0;
 let barNumber = 0;
 let currentBpm = 0;
