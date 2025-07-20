@@ -5,6 +5,15 @@ const volumeValue = document.getElementById('volumeValue');
 const trackAudio = document.getElementById('track');
 let beatCount = 0;
 let barNumber = 0;
+let currentBpm = 0;
+let isIncreasing = true;  // Alternare tra aumento e diminuzione
+let barsInCurrentPhase = 0;  // Contatore per le battute nella fase corrente
+
+// Input elements
+const bpmInput = document.getElementById('bpm');
+const repeatingBarsInput = document.getElementById('repeatingBars');
+const bpmIncreaseInput = document.getElementById('bpmIncrease');
+const bpmDecreaseInput = document.getElementById('bpmDecrease');
 
 // Sync volume slider and input
 volumeSlider.oninput = function() {
@@ -21,11 +30,31 @@ volumeValue.onchange = function() {
     trackAudio.volume = this.value / 100;
 };
 
+function updateBpm() {
+    const repeatingBars = parseInt(repeatingBarsInput.value);
+    barsInCurrentPhase++;
+
+    if (barsInCurrentPhase >= repeatingBars) {
+        barsInCurrentPhase = 0;
+        if (isIncreasing) {
+            currentBpm += parseInt(bpmIncreaseInput.value);
+        } else {
+            currentBpm -= parseInt(bpmDecreaseInput.value);
+        }
+        isIncreasing = !isIncreasing;  // Alterna tra aumento e diminuzione
+
+        // Aggiorna l'intervallo con il nuovo BPM
+        clearInterval(interval);
+        interval = setInterval(metronomeTick, (60 / currentBpm) * 1000);
+    }
+}
+
 function metronomeTick() {
     beatCount++;
     if (beatCount > 4) {
         beatCount = 1;
         barNumber++;
+        updateBpm();
     }
 
     // Update circles
@@ -33,22 +62,21 @@ function metronomeTick() {
     circles.forEach(circle => circle.style.background = '#ccc');
     document.getElementById('circle' + beatCount).style.background = '#4caf50';
     
-    // Update bar counter
-    document.getElementById('barCount').textContent = 'Bar: ' + barNumber;
+    // Update bar counter and BPM
+    document.getElementById('barCount').textContent = `Bar: ${barNumber} (${currentBpm} BPM)`;
 
     // Play audio only on first beat of the bar
     if (beatCount === 1) {
         trackAudio.volume = volumeSlider.value / 100;
         trackAudio.currentTime = 0;
-        const bpm = parseInt(document.getElementById('bpm').value);
-        trackAudio.playbackRate = bpm / 100;
+        trackAudio.playbackRate = currentBpm / 100;  // Usa il BPM corrente invece di quello iniziale
         trackAudio.play();
     }
 }
 
 document.getElementById('start').addEventListener('click', function() {
-    const bpm = parseInt(document.getElementById('bpm').value);
-    if (bpm < 30 || bpm > 300) {
+    const startingBpm = parseInt(bpmInput.value);
+    if (startingBpm < 30 || startingBpm > 300) {
         status.textContent = 'BPM must be between 30 and 300';
         return;
     }
@@ -57,6 +85,9 @@ document.getElementById('start').addEventListener('click', function() {
     if (interval) clearInterval(interval);
     beatCount = 0;
     barNumber = 1;  // Inizia da 1
+    currentBpm = startingBpm;
+    isIncreasing = true;
+    barsInCurrentPhase = 0;
     document.getElementById('barCount').textContent = 'Bar: 1';
     
     // Update button styles
@@ -69,7 +100,7 @@ document.getElementById('start').addEventListener('click', function() {
     
     // Start metronome
     metronomeTick();
-    interval = setInterval(metronomeTick, (60 / bpm) * 1000);
+    interval = setInterval(metronomeTick, (60 / currentBpm) * 1000);
     status.textContent = '';
 });
 
