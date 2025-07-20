@@ -28,6 +28,7 @@ function updateInputConstraints() {
     // Other inputs initialization
     const inputsConfig = {
         'bpm': { constraint: CONSTRAINTS.BPM, defaultValue: CONSTRAINTS.BPM.default },
+        'targetBpm': { constraint: CONSTRAINTS.TARGET_BPM, defaultValue: CONSTRAINTS.TARGET_BPM.default },
         'repeatingBars': { constraint: CONSTRAINTS.BARS, defaultValue: CONSTRAINTS.BARS.default },
         'bpmIncrease': { constraint: CONSTRAINTS.BPM_CHANGE, defaultValue: CONSTRAINTS.BPM_CHANGE.increase_default },
         'bpmDecrease': { constraint: CONSTRAINTS.BPM_CHANGE, defaultValue: CONSTRAINTS.BPM_CHANGE.decrease_default }
@@ -54,6 +55,7 @@ let barsInCurrentPhase = 0;  // Contatore per le battute nella fase corrente
 
 // Input elements
 const bpmInput = document.getElementById('bpm');
+const targetBpmInput = document.getElementById('targetBpm');
 const repeatingBarsInput = document.getElementById('repeatingBars');
 const bpmIncreaseInput = document.getElementById('bpmIncrease');
 const bpmDecreaseInput = document.getElementById('bpmDecrease');
@@ -102,19 +104,28 @@ volumeValue.onchange = function() {
 };
 
 function updateBpm() {
-    const repeatingBars = validateInput(repeatingBarsInput, 1, 10);
+    const repeatingBars = validateInput(repeatingBarsInput, CONSTRAINTS.BARS.min, CONSTRAINTS.BARS.max);
     barsInCurrentPhase++;
 
     if (barsInCurrentPhase >= repeatingBars) {
         barsInCurrentPhase = 0;
+        const targetBpm = validateInput(targetBpmInput, CONSTRAINTS.TARGET_BPM.min, CONSTRAINTS.TARGET_BPM.max);
+
         if (isIncreasing) {
-            currentBpm += validateInput(bpmIncreaseInput, 1, 10);
-            currentBpm = Math.min(currentBpm, CONSTRAINTS.BPM.max); // Assicura che non superi il massimo BPM
+            if (currentBpm < targetBpm) {
+                currentBpm += validateInput(bpmIncreaseInput, CONSTRAINTS.BPM_CHANGE.min, CONSTRAINTS.BPM_CHANGE.max);
+                if (currentBpm > targetBpm) {
+                    currentBpm = targetBpm;
+                }
+            }
         } else {
             currentBpm -= validateInput(bpmDecreaseInput, CONSTRAINTS.BPM_CHANGE.min, CONSTRAINTS.BPM_CHANGE.max);
-            currentBpm = Math.max(currentBpm, CONSTRAINTS.BPM.min);  // Assicura che non scenda sotto il minimo BPM
         }
-        isIncreasing = !isIncreasing;  // Alterna tra aumento e diminuzione
+        
+        // Alterna tra aumento e diminuzione finché non raggiungiamo il target
+        if (currentBpm < targetBpm) {
+            isIncreasing = !isIncreasing;
+        }
 
         // Aggiorna l'intervallo con il nuovo BPM
         clearInterval(interval);
