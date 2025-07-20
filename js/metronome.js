@@ -6,8 +6,19 @@ const trackAudio = document.getElementById('track');
 let beatCount = 0;
 let barNumber = 0;
 
+// Sync volume slider and input
 volumeSlider.oninput = function() {
-    volumeValue.textContent = volumeSlider.value;
+    volumeValue.value = this.value;
+    trackAudio.volume = this.value / 100;
+};
+
+volumeValue.onchange = function() {
+    // Ensure the value is within bounds
+    if (this.value > 100) this.value = 100;
+    if (this.value < 0) this.value = 0;
+    
+    volumeSlider.value = this.value;
+    trackAudio.volume = this.value / 100;
 };
 
 function metronomeTick() {
