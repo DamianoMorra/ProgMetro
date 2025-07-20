@@ -7,6 +7,41 @@ const trackAudio = document.getElementById('track');
 // Preload audio
 trackAudio.load();
 trackAudio.volume = volumeSlider.value / 100;
+
+// Update HTML input constraints and default values
+function updateInputConstraints() {
+    // Volume initialization
+    const volumeInput = document.getElementById('volume');
+    volumeInput.min = CONSTRAINTS.VOLUME.min;
+    volumeInput.max = CONSTRAINTS.VOLUME.max;
+    volumeInput.value = CONSTRAINTS.VOLUME.default;
+    
+    const volumeValueInput = document.getElementById('volumeValue');
+    volumeValueInput.min = CONSTRAINTS.VOLUME.min;
+    volumeValueInput.max = CONSTRAINTS.VOLUME.max;
+    volumeValueInput.value = CONSTRAINTS.VOLUME.default;
+
+    // Other inputs initialization
+    const inputsConfig = {
+        'bpm': { constraint: CONSTRAINTS.BPM, defaultValue: CONSTRAINTS.BPM.default },
+        'repeatingBars': { constraint: CONSTRAINTS.BARS, defaultValue: CONSTRAINTS.BARS.default },
+        'bpmIncrease': { constraint: CONSTRAINTS.BPM_CHANGE, defaultValue: CONSTRAINTS.BPM_CHANGE.increase_default },
+        'bpmDecrease': { constraint: CONSTRAINTS.BPM_CHANGE, defaultValue: CONSTRAINTS.BPM_CHANGE.decrease_default }
+    };
+
+    for (const [id, config] of Object.entries(inputsConfig)) {
+        const input = document.getElementById(id);
+        input.min = config.constraint.min;
+        input.max = config.constraint.max;
+        input.value = config.defaultValue;
+        const hint = input.nextElementSibling;
+        if (hint && hint.classList.contains('range-hint')) {
+            hint.textContent = `[${config.constraint.min}, ${config.constraint.max}]`;
+        }
+    }
+}
+
+updateInputConstraints();
 let beatCount = 0;
 let barNumber = 0;
 let currentBpm = 0;
@@ -18,6 +53,27 @@ const bpmInput = document.getElementById('bpm');
 const repeatingBarsInput = document.getElementById('repeatingBars');
 const bpmIncreaseInput = document.getElementById('bpmIncrease');
 const bpmDecreaseInput = document.getElementById('bpmDecrease');
+
+// Input validation functions
+function validateInput(input, min, max) {
+    let value = input.value.replace(/[eE]/g, ''); // Rimuove tutte le 'e' o 'E'
+    value = parseInt(value) || min; // Se il parsing fallisce, usa il valore minimo
+    if (isNaN(value)) value = min;
+    if (value < min) value = min;
+    if (value > max) value = max;
+    input.value = value;
+    return value;
+}
+
+// Add validation to all numeric inputs
+function addInputValidation(input, min, max) {
+    input.onchange = function() { validateInput(this, min, max); };
+}
+
+addInputValidation(bpmInput, CONSTRAINTS.BPM.min, CONSTRAINTS.BPM.max);
+addInputValidation(repeatingBarsInput, CONSTRAINTS.BARS.min, CONSTRAINTS.BARS.max);
+addInputValidation(bpmIncreaseInput, CONSTRAINTS.BPM_CHANGE.min, CONSTRAINTS.BPM_CHANGE.max);
+addInputValidation(bpmDecreaseInput, CONSTRAINTS.BPM_CHANGE.min, CONSTRAINTS.BPM_CHANGE.max);
 
 // Sync volume slider and input
 volumeSlider.oninput = function() {
@@ -35,15 +91,17 @@ volumeValue.onchange = function() {
 };
 
 function updateBpm() {
-    const repeatingBars = parseInt(repeatingBarsInput.value);
+    const repeatingBars = validateInput(repeatingBarsInput, 1, 10);
     barsInCurrentPhase++;
 
     if (barsInCurrentPhase >= repeatingBars) {
         barsInCurrentPhase = 0;
         if (isIncreasing) {
-            currentBpm += parseInt(bpmIncreaseInput.value);
+            currentBpm += validateInput(bpmIncreaseInput, 1, 10);
+            currentBpm = Math.min(currentBpm, CONSTRAINTS.BPM.max); // Assicura che non superi il massimo BPM
         } else {
-            currentBpm -= parseInt(bpmDecreaseInput.value);
+            currentBpm -= validateInput(bpmDecreaseInput, CONSTRAINTS.BPM_CHANGE.min, CONSTRAINTS.BPM_CHANGE.max);
+            currentBpm = Math.max(currentBpm, CONSTRAINTS.BPM.min);  // Assicura che non scenda sotto il minimo BPM
         }
         isIncreasing = !isIncreasing;  // Alterna tra aumento e diminuzione
 
@@ -80,11 +138,8 @@ function metronomeTick() {
 }
 
 document.getElementById('start').addEventListener('click', function() {
-    const startingBpm = parseInt(bpmInput.value);
-    if (startingBpm < 30 || startingBpm > 300) {
-        status.textContent = 'BPM must be between 30 and 300';
-        return;
-    }
+    const startingBpm = validateInput(bpmInput, 30, 300);
+    status.textContent = '';
     
     // Reset state
     if (interval) clearInterval(interval);
