@@ -9,6 +9,10 @@ trackAudio.load();
 trackAudio.volume = volumeSlider.value / 100;
 
 // Update HTML input constraints and default values
+function updateCurrentBpmDisplay(bpm) {
+    document.getElementById('currentBpmDisplay').textContent = `BPM: ${bpm}`;
+}
+
 function updateInputConstraints() {
     // Volume initialization
     const volumeInput = document.getElementById('volume');
@@ -67,10 +71,17 @@ function validateInput(input, min, max) {
 
 // Add validation to all numeric inputs
 function addInputValidation(input, min, max) {
-    input.onchange = function() { validateInput(this, min, max); };
+    input.onchange = function() { 
+        const value = validateInput(this, min, max);
+        if (this.id === 'bpm') {
+            updateCurrentBpmDisplay(value);
+        }
+    };
 }
 
 addInputValidation(bpmInput, CONSTRAINTS.BPM.min, CONSTRAINTS.BPM.max);
+// Inizializza il display con il valore di default
+updateCurrentBpmDisplay(CONSTRAINTS.BPM.default);
 addInputValidation(repeatingBarsInput, CONSTRAINTS.BARS.min, CONSTRAINTS.BARS.max);
 addInputValidation(bpmIncreaseInput, CONSTRAINTS.BPM_CHANGE.min, CONSTRAINTS.BPM_CHANGE.max);
 addInputValidation(bpmDecreaseInput, CONSTRAINTS.BPM_CHANGE.min, CONSTRAINTS.BPM_CHANGE.max);
